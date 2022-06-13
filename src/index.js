@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 
 // ===================================
-// EN-TETE DE CONEXION/CREATION DE COMPTE
+// EN-TETE DE CONNEXION/CREATION DE COMPTE
 //====================================
 
 class EnTete extends React.Component{
@@ -16,14 +16,22 @@ class EnTete extends React.Component{
       pseudo: "",
       motDePasse:""
     }
-    this.saisieInformationNouvelUtilisateur = this.saisieInformationNouvelUtilisateur.bind(this);
+    this.connexionUtilisateur = this.connexionUtilisateur.bind(this);
+    this.creationUtilisateur = this.creationUtilisateur.bind(this);
     this.retour = this.retour.bind(this);
   }
 
   // controler la saisie
-  saisieInformationNouvelUtilisateur(event){
+  connexionUtilisateur(event){
+    console.log("Connexion de l'utilisateur: pseudo: "+this.state.pseudo+"; mot de passe: "+this.state.motDePasse)
+    event.preventDefault()
+    this.props.connexionUtilisateur(this.state.pseudo, this.state.motDePasse)
+  }
+
+  creationUtilisateur(event){
     console.log("Création de l'utilisateur: pseudo: "+this.state.pseudo+"; mot de passe: "+this.state.motDePasse)
     event.preventDefault()
+    this.props.creationUtilisateur(this.state.pseudo, this.state.motDePasse)
   }
 
   retour(){
@@ -37,7 +45,6 @@ class EnTete extends React.Component{
         <div>
           <h4>{this.props.pseudo}</h4>
           <button onClick={this.props.deconnexion}>Déconnexion</button>
-
         </div>
         )
     } else if ( !this.props.connexionActive && !this.state.formulaireConnexion && !this.state.formulaireCreationCompte){
@@ -51,9 +58,9 @@ class EnTete extends React.Component{
     } else if (!this.props.connexionActive && this.state.formulaireConnexion && !this.state.formulaireCreationCompte){
       return(
       <div>
-        <h4>Créer un compte</h4>
+        <h4>Connexion</h4>
         <div>
-          <form onSubmit= {this.saisieInformationNouvelUtilisateur}>
+          <form onSubmit= {this.connexionUtilisateur}>
             <label>
               Pseudo
               <input type="text" value={this.state.pseudo} onChange={(event) => this.setState({pseudo: event.target.value})}/>
@@ -62,7 +69,7 @@ class EnTete extends React.Component{
               Mot de passe
               <input type="password" value={this.state.motDePasse} onChange={(event) => this.setState({motDePasse: event.target.value})} />
             </label>
-            <input type="submit" value="Créer le compte"/>
+            <input type="submit" value="Connexion"/>
           </form>
         </div>
         <div>
@@ -73,9 +80,9 @@ class EnTete extends React.Component{
     } else if (!this.props.connexionActive && !this.state.formulaireConnexion && this.state.formulaireCreationCompte){
       return(
       <div>
-        <h4>Connexion</h4>
+        <h4>Création de compte</h4>
           <div>
-            <form onSubmit= {this.saisieInformationNouvelUtilisateur}>
+            <form onSubmit= {this.creationUtilisateur}>
               <label>
                 Pseudo
                 <input type="text" value={this.state.pseudo} onChange={(event) => this.setState({pseudo: event.target.value})}/>
@@ -84,7 +91,7 @@ class EnTete extends React.Component{
                 Mot de passe
                 <input type="password" value={this.state.motDePasse} onChange={(event) => this.setState({motDePasse: event.target.value})} />
               </label>
-              <input type="submit" value="Connexion"/>      
+              <input type="submit" value="créer le compte"/>      
             </form>
           </div>
           <div>
@@ -95,6 +102,8 @@ class EnTete extends React.Component{
     }
   }
 }
+
+
 
 class Cellule extends React.Component {
   render() {
@@ -139,9 +148,10 @@ class Automate extends React.Component {
   async componentDidMount(){
     const response = await fetch("http://127.0.0.1:5000/configuration/obtenir/1");
     const responsejson = await response.json();
+    console.log(responsejson)
     let automateConfiguration = responsejson[0]
-    this.setState({nom:automateConfiguration.Nom, largeur:automateConfiguration.Largeur, hauteur:automateConfiguration.Hauteur})
-    console.log("config retourné par l'API:"+JSON.stringify(automateConfiguration))
+    this.setState({nom:responsejson.Nom, largeur:responsejson.Largeur, hauteur:responsejson.Hauteur})
+    console.log("config retourné par l'API:"+JSON.stringify(responsejson))
   }
 
   handleClick(i,j){
@@ -181,17 +191,42 @@ class GameOfLife extends React.Component {
   constructor(props){
     super(props)
 
-  this.state ={
-    connexionActive : false
-  }
+    this.state ={
+      connexionActive : false,
+      pseudo: null
+    }
 
   }
+
+  async connexionUtilisateur(pseudo, motDePasse){
+    let json = JSON.stringify({pseudo: pseudo, mot_de_passe: motDePasse})
+    const reponse = await fetch("http://127.0.0.1:5000/utilisateur/connecter", {
+      method: "POST",
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: json
+    });
+    if ( reponse.status == 200){
+      const reponsejson = await reponse.json();
+      this.setState({connexionActive: true, pseudo: reponsejson["pseudo"]})
+    }
+  }
+  
+  creationUtilisateur(pseudo, motDePasse){
+
+  }
+
 
   render() {
     return (
       <div className="game">
         <div className="game-board">
-          <EnTete connexionActive = {this.state.connexionActive}/>
+          <EnTete connexionActive = {this.state.connexionActive} 
+          connexionUtilisateur={(pseudo, motDePasse) => this.connexionUtilisateur(pseudo, motDePasse)}
+          creationUtilisateur={(pseudo, motDePasse) => this.creationUtilisateur(pseudo, motDePasse)}
+          pseudo={this.state.pseudo}
+          />
           <Automate />
         </div>
         <div className="game-info">
