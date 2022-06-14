@@ -44,13 +44,13 @@ class EnTete extends React.Component{
       return(
         <div>
           <h4>{this.props.pseudo}</h4>
-          <button onClick={this.props.deconnexion}>Déconnexion</button>
+          <button onClick={this.props.deconnecterUtilisateur}>Déconnexion</button>
         </div>
         )
     } else if ( !this.props.connexionActive && !this.state.formulaireConnexion && !this.state.formulaireCreationCompte){
       return (
         <div>
-          <h4>Anonyme</h4>
+          <h4>{this.props.pseudo}</h4>
           <button onClick={() => this.setState({formulaireCreationCompte: true, formulaireConnexion: false})}>Créer un compte</button>
           <button onClick={() => this.setState({formulaireConnexion: true, formulaireCreationCompte: false})}>Connexion à un compte existant</button>
         </div>
@@ -141,17 +141,18 @@ class Automate extends React.Component {
       hauteur: null,
       largeur: null,
       identifiant: null,
-      nom: null
+      sope: null,
+      pseudo: "Anonyme"
     }
   }
 
   async componentDidMount(){
+
+    // récupération de la configuration de base à afficher dans le formulaire
     const response = await fetch("http://127.0.0.1:5000/configuration/obtenir/1");
     const responsejson = await response.json();
-    console.log(responsejson)
-    let automateConfiguration = responsejson[0]
     this.setState({nom:responsejson.Nom, largeur:responsejson.Largeur, hauteur:responsejson.Hauteur})
-    console.log("config retourné par l'API:"+JSON.stringify(responsejson))
+    console.log("Configuration de base chargée:" + JSON.stringify(responsejson))
   }
 
   handleClick(i,j){
@@ -198,6 +199,21 @@ class GameOfLife extends React.Component {
 
   }
 
+  async componentDidMount(){
+    const utilisateur = await fetch("http://127.0.0.1:5000/session", {
+      credentials: 'include'
+    })
+    const utilisateurInfo = await utilisateur.json();
+    console.log("Utilisateur connecté:"+JSON.stringify(utilisateurInfo))
+
+    // si l'utilsiateur est anonyme
+    if ( utilisateurInfo.pseudo === "Anonyme"){
+      this.setState({pseudo: utilisateurInfo.pseudo, connexionActive: false})
+    }else{
+      this.setState({pseudo: utilisateurInfo.pseudo, connexionActive: true})
+    }
+  }
+
   async connexionUtilisateur(pseudo, motDePasse){
     let json = JSON.stringify({pseudo: pseudo, mot_de_passe: motDePasse})
     const reponse = await fetch("http://127.0.0.1:5000/utilisateur/connecter", {
@@ -205,12 +221,20 @@ class GameOfLife extends React.Component {
       headers: {
         'Content-Type': 'application/json',
       },
+      credentials:"include",
       body: json
     });
-    if ( reponse.status == 200){
+    if ( reponse.status === 200){
       const reponsejson = await reponse.json();
       this.setState({connexionActive: true, pseudo: reponsejson["pseudo"]})
     }
+  }
+
+  async deconnecterUtilisateur(){
+    await fetch("http://127.0.0.1:5000/utilisateur/deconnecter",{
+      credentials: "include"
+    })
+    this.setState({connexionActive: false, pseudo: "Anonyme"})
   }
   
   creationUtilisateur(pseudo, motDePasse){
@@ -226,6 +250,7 @@ class GameOfLife extends React.Component {
           connexionUtilisateur={(pseudo, motDePasse) => this.connexionUtilisateur(pseudo, motDePasse)}
           creationUtilisateur={(pseudo, motDePasse) => this.creationUtilisateur(pseudo, motDePasse)}
           pseudo={this.state.pseudo}
+          deconnecterUtilisateur={() => this.deconnecterUtilisateur()}
           />
           <Automate />
         </div>
