@@ -25,7 +25,10 @@ class EnTete extends React.Component{
   connexionUtilisateur(event){
     console.log("Connexion de l'utilisateur: pseudo: "+this.state.pseudo+"; mot de passe: "+this.state.motDePasse)
     event.preventDefault()
-    this.props.connexionUtilisateur(this.state.pseudo, this.state.motDePasse)
+    let result = this.props.connexionUtilisateur(this.state.pseudo, this.state.motDePasse)
+    if (result) {
+      this.setState({pseudo:"", motDePasse:""})
+    }
   }
 
   creationUtilisateur(event){
@@ -103,7 +106,79 @@ class EnTete extends React.Component{
   }
 }
 
+// ===================================
+// AFFICHAGE ET EDITION DES PARAMETRES
+//====================================
 
+class Parametres extends React.Component{
+
+  constructor(props){
+    super(props)
+    this.state = {
+      nom: null,
+      hauteur: null,
+      largeur: null,
+      identifiant: null,
+      test: 0
+    }
+    this.chargerConfigurationActive = this.chargerConfigurationActive.bind(this)
+  }
+
+  async componentDidMount(){
+    // récupération de la configuration de base à afficher dans le formulaire
+    const response = await fetch("http://127.0.0.1:5000/configuration/obtenir/1");
+    const responsejson = await response.json();
+    this.setState({nom:responsejson.Nom, largeur:responsejson.Largeur, hauteur:responsejson.Hauteur, identifiant:responsejson.Identifiant})
+    console.log("Configuration de base chargée:" + JSON.stringify(responsejson))
+  }
+
+  optionConfiguration(value, nom){
+    return <option value={value}>{nom}</option>
+  }
+
+  construireListeConfiguration(){
+    let liste = []
+    let configs = this.props.configurations
+    Object.keys(configs).forEach(function(key) {
+      liste.push(<option value={key}>{configs[key]}</option>)
+   });
+    return liste
+  }
+
+
+  async chargerConfigurationActive(){
+    let reponse = await fetch("http://127.0.0.1:5000/configuration/obtenir/"+this.state.identifiant)
+    const responsejson = await reponse.json()
+    this.setState({nom:responsejson.Nom, largeur:responsejson.Largeur, hauteur:responsejson.Hauteur})
+  }
+
+  render(){
+    let listConfig = this.construireListeConfiguration()
+    console.log(this.state.nom)
+    return(
+      <div>
+        <div>
+          Nom: {this.state.nom}
+        </div>
+        <div>
+          Hauteur: {this.state.hauteur}
+        </div>
+        <div>
+          Largeur: {this.state.largeur}
+        </div>
+        <div>
+          <button onClick={this.props.enregistrerConfiguration} disabled={!this.props.connexionActive}>Enregistrer la configuration</button>
+        </div>
+        <div>
+          <label>Configurations enregistrées:</label>
+          <select value = {this.state.identifiant} onChange={(event) => this.setState({identifiant:event.target.value}, () => this.chargerConfigurationActive())}>
+            {listConfig}
+          </select>
+        </div>
+      </div>
+    )
+  }
+}
 
 class Cellule extends React.Component {
   render() {
@@ -115,45 +190,7 @@ class Cellule extends React.Component {
   }
 }
 
-class Parametres extends React.Component{
-  render(){
-    return(<div>
-      <div>
-        Nom: {this.props.nom}
-      </div>
-      <div>
-        Hauteur: {this.props.hauteur}
-      </div>
-      <div>
-        Largeur: {this.props.largeur}
-      </div>
-    </div>)
-  }
-}
-
 class Automate extends React.Component {
-
-  constructor(props){
-    super(props);
-
-    this.state = {
-      automate : null,
-      hauteur: null,
-      largeur: null,
-      identifiant: null,
-      sope: null,
-      pseudo: "Anonyme"
-    }
-  }
-
-  async componentDidMount(){
-
-    // récupération de la configuration de base à afficher dans le formulaire
-    const response = await fetch("http://127.0.0.1:5000/configuration/obtenir/1");
-    const responsejson = await response.json();
-    this.setState({nom:responsejson.Nom, largeur:responsejson.Largeur, hauteur:responsejson.Hauteur})
-    console.log("Configuration de base chargée:" + JSON.stringify(responsejson))
-  }
 
   handleClick(i,j){
     let nouvelAutomate = this.state.automate.slice();
@@ -179,7 +216,7 @@ class Automate extends React.Component {
 
     return (
       <div>
-          <Parametres nom = {this.state.nom} hauteur = {this.state.hauteur} largeur={this.state.largeur} densite={this.state.densite}/>
+          
             {/* {tableau_lignes_automate} */}
       </div>
       
@@ -194,7 +231,8 @@ class GameOfLife extends React.Component {
 
     this.state ={
       connexionActive : false,
-      pseudo: null
+      pseudo: null,
+      configurations: {}
     }
 
   }
@@ -206,11 +244,12 @@ class GameOfLife extends React.Component {
     const utilisateurInfo = await utilisateur.json();
     console.log("Utilisateur connecté:"+JSON.stringify(utilisateurInfo))
 
-    // si l'utilsiateur est anonyme
+    // si l'utilisateur est anonyme
     if ( utilisateurInfo.pseudo === "Anonyme"){
       this.setState({pseudo: utilisateurInfo.pseudo, connexionActive: false})
+    // si c'est un compte, afficher ses configurations
     }else{
-      this.setState({pseudo: utilisateurInfo.pseudo, connexionActive: true})
+      this.setState({pseudo: utilisateurInfo.pseudo, connexionActive: true, configurations:utilisateurInfo.configurations})
     }
   }
 
@@ -226,7 +265,10 @@ class GameOfLife extends React.Component {
     });
     if ( reponse.status === 200){
       const reponsejson = await reponse.json();
-      this.setState({connexionActive: true, pseudo: reponsejson["pseudo"]})
+      this.setState({connexionActive: true, pseudo: reponsejson["pseudo"], configurations:reponsejson.configurations})
+      return true
+    }else{
+      return false
     }
   }
 
@@ -234,7 +276,7 @@ class GameOfLife extends React.Component {
     await fetch("http://127.0.0.1:5000/utilisateur/deconnecter",{
       credentials: "include"
     })
-    this.setState({connexionActive: false, pseudo: "Anonyme"})
+    this.setState({connexionActive: false, pseudo: "Anonyme", configurations:null})
   }
   
   creationUtilisateur(pseudo, motDePasse){
@@ -252,6 +294,7 @@ class GameOfLife extends React.Component {
           pseudo={this.state.pseudo}
           deconnecterUtilisateur={() => this.deconnecterUtilisateur()}
           />
+          <Parametres nom = {this.state.nom} configurations={this.state.configurations} connexionActive={this.state.connexionActive}/>
           <Automate />
         </div>
         <div className="game-info">
