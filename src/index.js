@@ -133,23 +133,16 @@ class Parametres extends React.Component{
       nom: "",
       hauteur: "",
       largeur: "",
-      identifiant: "",
-      identifiantConfigParDefaut: "",
-      nomConfigurationParDefaut: ""
+      identifiant: ""
     }
     this.changerConfigurationActive = this.changerConfigurationActive.bind(this)
-    this.enregistrerConfiguration =this.enregistrerConfiguration.bind(this)
+    this.enregistrerConfiguration = this.enregistrerConfiguration.bind(this)
   }
 
-  async componentDidMount(){
-    // récupération de la configuration de base à afficher dans le formulaire
-    const response = await fetch("http://127.0.0.1:5000/configuration/obtenir/1");
-    const responsejson = await response.json();
-    this.setState({nom:responsejson.Nom, largeur:responsejson.Largeur, 
-      hauteur:responsejson.Hauteur, identifiant:responsejson.Identifiant,
-      identifiantConfigParDefaut: responsejson.Identifiant, nomConfigurationParDefaut:responsejson.Nom
-    })
-    console.log("Configuration de base chargée:" + JSON.stringify(responsejson))
+  componentDidUpdate(){
+    if (this.state.identifiant === ""){
+      this.setState({identifiant: Object.keys(this.props.configurations)[0]}, () => this.chargerConfiguration())
+    }
   }
 
   optionConfiguration(value, nom){
@@ -157,9 +150,8 @@ class Parametres extends React.Component{
   }
 
   construireListeConfiguration(){
-    let liste = []
     let configs = this.props.configurations
-    liste.push(<option value={this.state.identifiantConfigParDefaut}>{this.state.nomConfigurationParDefaut}</option>)
+    let liste = []
     Object.keys(configs).forEach(function(key) {
       liste.push(<option value={key}>{configs[key]}</option>)
    });
@@ -171,7 +163,9 @@ class Parametres extends React.Component{
   }
 
   async chargerConfiguration(){
-    let reponse = await fetch("http://127.0.0.1:5000/configuration/obtenir/"+this.state.identifiant)
+    let reponse = await fetch("http://127.0.0.1:5000/configuration/obtenir/"+this.state.identifiant, {
+      credentials: 'include'
+    })
       const responsejson = await reponse.json()
       this.setState({nom:responsejson.Nom, largeur:responsejson.Largeur, hauteur:responsejson.Hauteur})
   }
@@ -185,7 +179,7 @@ class Parametres extends React.Component{
     }
     let json = JSON.stringify(config)
     console.log("enregistrer "+ json)
-    let reponse = await fetch("http://127.0.0.1:5000/configuration/enregistrer", {
+    let reponse = await fetch("http://127.0.0.1:5000/configuration/modifier", {
       method: "POST",
       headers: {
         'Content-Type': 'application/json',
@@ -303,13 +297,13 @@ class GameOfLife extends React.Component {
     })
     const utilisateurInfo = await utilisateur.json();
     console.log("Utilisateur connecté:"+JSON.stringify(utilisateurInfo))
-
+    this.setState({configurations:utilisateurInfo.configurations})
     // si l'utilisateur est anonyme
     if ( utilisateurInfo.pseudo === "Anonyme"){
       this.setState({pseudo: utilisateurInfo.pseudo, connexionActive: false})
     // si c'est un compte, afficher ses configurations
     }else{
-      this.setState({pseudo: utilisateurInfo.pseudo, connexionActive: true, configurations:utilisateurInfo.configurations})
+      this.setState({pseudo: utilisateurInfo.pseudo, connexionActive: true})
     }
   }
 
@@ -336,6 +330,7 @@ class GameOfLife extends React.Component {
     await fetch("http://127.0.0.1:5000/utilisateur/deconnecter",{
       credentials: "include"
     })
+    // TODO: à la déconnexion l'utilisateur doit recevoir les infos du compte anonyme
     this.setState({connexionActive: false, pseudo: "Anonyme", configurations:{}})
   }
   creationUtilisateur(pseudo, motDePasse){
