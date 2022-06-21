@@ -44,7 +44,6 @@ class EnTete extends React.Component{
   }
 
   render(){
-    console.log("rendr en-tete, pseudo: "+this.props.pseudo+" connection active: "+this.props.connexionActive)
     if ( this.props.connexionActive){
       return(
         <div>
@@ -136,7 +135,7 @@ class Parametres extends React.Component{
       identifiant: ""
     }
     this.changerConfigurationActive = this.changerConfigurationActive.bind(this)
-    this.enregistrerConfiguration = this.enregistrerConfiguration.bind(this)
+    this.modifierConfiguration = this.modifierConfiguration.bind(this)
   }
 
   componentDidUpdate(){
@@ -167,10 +166,12 @@ class Parametres extends React.Component{
       credentials: 'include'
     })
       const responsejson = await reponse.json()
-      this.setState({nom:responsejson.Nom, largeur:responsejson.Largeur, hauteur:responsejson.Hauteur})
+      if ( reponse.status === 200){
+        this.setState({nom:responsejson.Nom, largeur:responsejson.Largeur, hauteur:responsejson.Hauteur})
+      }
   }
 
-  async enregistrerConfiguration(){
+  async modifierConfiguration(){
     const config = {
       identifiant: this.state.identifiant,
       nom: this.state.nom,
@@ -178,7 +179,7 @@ class Parametres extends React.Component{
       hauteur: this.state.hauteur
     }
     let json = JSON.stringify(config)
-    console.log("enregistrer "+ json)
+    console.log("modifier "+ json)
     let reponse = await fetch("http://127.0.0.1:5000/configuration/modifier", {
       method: "POST",
       headers: {
@@ -187,7 +188,30 @@ class Parametres extends React.Component{
       credentials:"include",
       body: json
     })
-    this.props.mettreAJourListeconfiguration()
+    if ( reponse.status === 200){
+      this.props.mettreAJourListeconfiguration()
+    }
+  }
+
+  async creerConfiguration(){
+    const config = {
+      nom: this.state.nom,
+      largeur: this.state.largeur,
+      hauteur: this.state.hauteur
+    }
+    let json = JSON.stringify(config)
+    console.log("créer une nouvelle config- nom:"+json)
+    let reponse = await fetch("http://127.0.0.1:5000/configuration/creer", {
+      method: "POST",
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials:"include",
+      body: json
+    })
+    if ( reponse.status === 200){
+      this.props.mettreAJourListeconfiguration()
+    }
   }
 
   render(){
@@ -208,7 +232,8 @@ class Parametres extends React.Component{
             <input value={this.state.largeur} type="text" onChange={(event) => this.changementLargeur(event)}/>
           </div>
           <div>
-            <button type= "button" onClick={() => this.enregistrerConfiguration()} disabled={!this.props.connexionActive}>Enregistrer la configuration</button>
+            <button type= "button" onClick={() => this.modifierConfiguration()} disabled={!this.props.connexionActive}>Modifier la configuration</button>
+            <button type= "button" onClick={() => this.creerConfiguration()} disabled={!this.props.connexionActive}>Creer la configuration</button>
           </div>
           <div>
             <label>Configurations enregistrées:</label>
@@ -340,7 +365,6 @@ class GameOfLife extends React.Component {
   }
 
   async mettreAJourListeconfiguration(){
-    console.log("maj config")
     const utilisateur = await fetch("http://127.0.0.1:5000/session", {
       credentials: 'include'
     })
