@@ -95,7 +95,7 @@ class EnTete extends React.Component{
                 Mot de passe
                 <input type="password" value={this.state.motDePasse} onChange={(event) => this.changementMotDePasse(event)} />
               </label>
-              <input type="submit" value="créer le compte"/>      
+              <input type="submit" value="Créer le compte"/>      
             </form>
           </div>
           <div>
@@ -217,6 +217,17 @@ class Parametres extends React.Component{
     }
   }
 
+  async supprimerConfiguration(){
+    console.log("supprimer:"+this.state.identifiant)
+    let reponse = await fetch("http://127.0.0.1:5000/configuration/supprimer/"+this.state.identifiant, {
+      credentials: 'include'
+    })
+      const responsejson = await reponse.json()
+      if ( reponse.status === 200){
+        console.log("supression réussie")
+      }
+  }
+
   render(){
     let listConfig = this.construireListeConfiguration()
     return(
@@ -235,8 +246,9 @@ class Parametres extends React.Component{
             <input value={this.state.largeur} type="text" onChange={(event) => this.changementLargeur(event)}/>
           </div>
           <div>
-            <button type= "button" onClick={() => this.modifierConfiguration()} disabled={!this.props.connexionActive}>Modifier la configuration</button>
-            <button type= "button" onClick={() => this.creerConfiguration()} disabled={!this.props.connexionActive}>Creer la configuration</button>
+            <button type= "button" onClick={() => this.modifierConfiguration()} disabled={!this.props.connexionActive}>Modifier</button>
+            <button type= "button" onClick={() => this.creerConfiguration()} disabled={!this.props.connexionActive}>Créer</button>
+            <button type= "button" onClick={() => this.supprimerConfiguration()} disabled={!this.props.connexionActive}>Supprimer</button>
           </div>
           <div>
             <label>Configurations enregistrées:</label>
@@ -364,7 +376,23 @@ class GameOfLife extends React.Component {
     }
   }
 
-  creationUtilisateur(pseudo, motDePasse){
+  async creationUtilisateur(pseudo, motDePasse){
+    let json = JSON.stringify({pseudo: pseudo, mot_de_passe: motDePasse})
+    const reponse = await fetch("http://127.0.0.1:5000/utilisateur/creer", {
+      method: "POST",
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials:"include",
+      body: json
+    })
+    if ( reponse.status === 200){
+      const reponsejson = await reponse.json();
+      this.setState({connexionActive: true, pseudo: reponsejson["pseudo"], configurations:reponsejson.configurations})
+      return true
+    }else{
+      return false
+    }
   }
 
   async mettreAJourListeconfiguration(){
