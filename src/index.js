@@ -162,6 +162,7 @@ class Parametres extends React.Component{
   }
 
   async chargerConfiguration(){
+    console.log("chargerConfiguration:"+this.state.identifiant)
     let reponse = await fetch("http://127.0.0.1:5000/configuration/obtenir/"+this.state.identifiant, {
       credentials: 'include'
     })
@@ -210,7 +211,9 @@ class Parametres extends React.Component{
       body: json
     })
     if ( reponse.status === 200){
+      let reponse_json = await reponse.json()
       this.props.mettreAJourListeconfiguration()
+      this.setState({identifiant:reponse_json["identifiant"]}, () => this.chargerConfiguration())
     }
   }
 
