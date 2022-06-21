@@ -44,7 +44,7 @@ class EnTete extends React.Component{
   }
 
   render(){
-
+    console.log("rendr en-tete, pseudo: "+this.props.pseudo+" connection active: "+this.props.connexionActive)
     if ( this.props.connexionActive){
       return(
         <div>
@@ -327,12 +327,15 @@ class GameOfLife extends React.Component {
   }
 
   async deconnecterUtilisateur(){
-    await fetch("http://127.0.0.1:5000/utilisateur/deconnecter",{
+    const reponse = await fetch("http://127.0.0.1:5000/utilisateur/deconnecter",{
       credentials: "include"
     })
-    // TODO: à la déconnexion l'utilisateur doit recevoir les infos du compte anonyme
-    this.setState({connexionActive: false, pseudo: "Anonyme", configurations:{}})
+    if ( reponse.status === 200){
+      const reponsejson = await reponse.json();
+      this.setState({connexionActive: false, pseudo: reponsejson["pseudo"], configurations:reponsejson.configurations})
+    }
   }
+
   creationUtilisateur(pseudo, motDePasse){
   }
 
