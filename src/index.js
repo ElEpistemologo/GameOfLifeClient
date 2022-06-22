@@ -126,28 +126,6 @@ class EnTete extends React.Component{
 
 class Parametres extends React.Component{
 
-  constructor(props){
-    super(props)
-    this.state = {
-      nom: "",
-      hauteur: "",
-      largeur: "",
-      identifiant: ""
-    }
-    this.changerConfigurationActive = this.changerConfigurationActive.bind(this)
-    this.modifierConfiguration = this.modifierConfiguration.bind(this)
-  }
-
-  componentDidUpdate(){
-    if (this.state.identifiant === ""){
-      this.setState({identifiant: Object.keys(this.props.configurations)[0]}, () => this.chargerConfiguration())
-    }
-  }
-
-  optionConfiguration(value, nom){
-    return <option value={value}>{nom}</option>
-  }
-
   construireListeConfiguration(){
     let configs = this.props.configurations
     let liste = []
@@ -157,77 +135,6 @@ class Parametres extends React.Component{
     return liste
   }
 
-  changerConfigurationActive(event){
-    this.setState({identifiant:event.target.value}, () => this.chargerConfiguration())
-  }
-
-  async chargerConfiguration(){
-    console.log("chargerConfiguration:"+this.state.identifiant)
-    let reponse = await fetch("http://127.0.0.1:5000/configuration/obtenir/"+this.state.identifiant, {
-      credentials: 'include'
-    })
-      const responsejson = await reponse.json()
-      if ( reponse.status === 200){
-        this.setState({nom:responsejson.Nom, largeur:responsejson.Largeur, hauteur:responsejson.Hauteur})
-      }
-  }
-
-  async modifierConfiguration(){
-    const config = {
-      identifiant: this.state.identifiant,
-      nom: this.state.nom,
-      largeur: this.state.largeur,
-      hauteur: this.state.hauteur
-    }
-    let json = JSON.stringify(config)
-    console.log("modifier "+ json)
-    let reponse = await fetch("http://127.0.0.1:5000/configuration/modifier", {
-      method: "POST",
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials:"include",
-      body: json
-    })
-    if ( reponse.status === 200){
-      this.props.mettreAJourListeconfiguration()
-    }
-  }
-
-  async creerConfiguration(){
-    const config = {
-      nom: this.state.nom,
-      largeur: this.state.largeur,
-      hauteur: this.state.hauteur
-    }
-    let json = JSON.stringify(config)
-    console.log("créer une nouvelle config- nom:"+json)
-    let reponse = await fetch("http://127.0.0.1:5000/configuration/creer", {
-      method: "POST",
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials:"include",
-      body: json
-    })
-    if ( reponse.status === 200){
-      let reponse_json = await reponse.json()
-      this.props.mettreAJourListeconfiguration()
-      this.setState({identifiant:reponse_json["identifiant"]}, () => this.chargerConfiguration())
-    }
-  }
-
-  async supprimerConfiguration(){
-    console.log("supprimer:"+this.state.identifiant)
-    let reponse = await fetch("http://127.0.0.1:5000/configuration/supprimer/"+this.state.identifiant, {
-      credentials: 'include'
-    })
-      const responsejson = await reponse.json()
-      if ( reponse.status === 200){
-        console.log("supression réussie")
-      }
-  }
-
   render(){
     let listConfig = this.construireListeConfiguration()
     return(
@@ -235,24 +142,34 @@ class Parametres extends React.Component{
         <form>
           <div>
             <label>Nom:</label>
-            <input value={this.state.nom} type="text" onChange={(event) =>  this.changementNom(event)}/>
+            <input value={this.props.nom} type="text" onChange={(event) =>  this.props.changementNom(event)}/>
           </div>
           <div>
             <label>Hauteur:</label>
-            <input value={this.state.hauteur} type="text" onChange={(event) => this.changementHauteur(event)}/>
+            <input value={this.props.hauteur} type="text" onChange={(event) => this.props.changementHauteur(event)}/>
           </div>
           <div>
             <label>Largeur:</label>
-            <input value={this.state.largeur} type="text" onChange={(event) => this.changementLargeur(event)}/>
+            <input value={this.props.largeur} type="text" onChange={(event) => this.props.changementLargeur(event)}/>
           </div>
           <div>
-            <button type= "button" onClick={() => this.modifierConfiguration()} disabled={!this.props.connexionActive}>Modifier</button>
-            <button type= "button" onClick={() => this.creerConfiguration()} disabled={!this.props.connexionActive}>Créer</button>
-            <button type= "button" onClick={() => this.supprimerConfiguration()} disabled={!this.props.connexionActive}>Supprimer</button>
+            <button type= "button" >Visualiser</button>
+            <button type= "button" >Remplissage Aléatoire</button>
+            <button type= "button" >Vider</button>
+          </div>
+          <div>
+            <button type= "button" >Démarrer</button>
+            <button type= "button" >Pause</button>
+            <button type= "button" >Stop</button>
+          </div>
+          <div>
+            <button type= "button" onClick={() => this.props.modifierConfiguration()} disabled={!this.props.connexionActive}>Modifier</button>
+            <button type= "button" onClick={() => this.props.enregistrerConfiguration()} disabled={!this.props.connexionActive}>Enregistrer</button>
+            <button type= "button" onClick={() => this.props.supprimerConfiguration()} disabled={!this.props.connexionActive}>Supprimer</button>
           </div>
           <div>
             <label>Configurations enregistrées:</label>
-            <select value = {this.state.identifiant} onChange={(event) =>  this.changerConfigurationActive(event)}>
+            <select value = {this.props.identifiant} onChange={(event) => this.props.changerConfigurationActive(event)}>
               {listConfig}
             </select>
           </div>
@@ -260,18 +177,11 @@ class Parametres extends React.Component{
       </div>
     )
   }
-
-  changementNom(event){
-    this.setState({nom:event.target.value})
-  }
-  changementHauteur(event){
-    this.setState({hauteur:event.target.value})
-  }
-  changementLargeur(event){
-    this.setState({largeur:event.target.value})
-  }
-
 }
+
+// ===================================
+// CELLULE DE L'AUTOMATE
+//====================================
 
 class Cellule extends React.Component {
   render() {
@@ -283,36 +193,39 @@ class Cellule extends React.Component {
   }
 }
 
+// ===================================
+// AUTOMATE
+//====================================
+
 class Automate extends React.Component {
 
-  handleClick(i,j){
-    let nouvelAutomate = this.state.automate.slice();
-    nouvelAutomate[i][j] = !this.state.automate[i][j];
-    this.setState({automate: nouvelAutomate});
+  constructor(props){
+    super(props)
+    this.state = {
+      automateEnPause: false
+    }
   }
 
   renderCellule(i, j) {
-    return <Cellule value={this.state.automate[i][j]} onClick={() => this.handleClick(i, j)} />;
+    return <Cellule value={this.props.etatCourant[i][j]} onClick={() => this.props.handleClick(i, j)} />;
   }
 
   render() {
-    if ( this.automate != null ){
-      let tableau_lignes_automate = []
-    for (let iterateur_hauteur = 0; iterateur_hauteur < this.state.hauteur; iterateur_hauteur++){
-      let cellules = []
-      for (let iterateur_largeur = 0; iterateur_largeur < this.state.largeur; iterateur_largeur++){
-        cellules.push(this.renderCellule(iterateur_largeur,iterateur_hauteur))
+    let tableau_lignes_automate = []
+    if ( this.props.etatCourant != null ){
+      for (let iterateur_hauteur = 0; iterateur_hauteur < this.props.etatCourant[0].length; iterateur_hauteur++){
+        let cellules = []
+        for (let iterateur_largeur = 0; iterateur_largeur < this.props.etatCourant.length; iterateur_largeur++){
+          cellules.push(this.renderCellule(iterateur_largeur,iterateur_hauteur))
+        }
+        tableau_lignes_automate.push(<div className="board-row"> {cellules} </div>)
       }
-      tableau_lignes_automate.push(<div className="board-row"> {cellules} </div>)
-    }
     }
 
     return (
-      <div>
-          
-            {/* {tableau_lignes_automate} */}
+      <div class="automate">
+            {tableau_lignes_automate}
       </div>
-      
     );
   }
 }
@@ -325,7 +238,13 @@ class GameOfLife extends React.Component {
     this.state ={
       connexionActive : false,
       pseudo: null,
-      configurations: {}
+      nom: "",
+      hauteur: "",
+      largeur: "",
+      identifiant: "",
+      configurations: {},
+      etatInitial: null,
+      etatCourant: null
     }
 
     this.mettreAJourListeconfiguration = this.mettreAJourListeconfiguration.bind(this)
@@ -337,13 +256,15 @@ class GameOfLife extends React.Component {
     })
     const utilisateurInfo = await utilisateur.json();
     console.log("Utilisateur connecté:"+JSON.stringify(utilisateurInfo))
-    this.setState({configurations:utilisateurInfo.configurations})
-    // si l'utilisateur est anonyme
+    this.setState({configurations:utilisateurInfo.configurations, pseudo: utilisateurInfo.pseudo}, () => {
+      if (this.state.identifiant === ""){
+        this.setState({identifiant: Object.keys(this.state.configurations)[0]}, () => this.chargerConfiguration())
+      }
+    })
     if ( utilisateurInfo.pseudo === "Anonyme"){
-      this.setState({pseudo: utilisateurInfo.pseudo, connexionActive: false})
-    // si c'est un compte, afficher ses configurations
+      this.setState({connexionActive: false})
     }else{
-      this.setState({pseudo: utilisateurInfo.pseudo, connexionActive: true})
+      this.setState({connexionActive: true})
     }
   }
 
@@ -370,7 +291,7 @@ class GameOfLife extends React.Component {
     const reponse = await fetch("http://127.0.0.1:5000/utilisateur/deconnecter",{
       credentials: "include"
     })
-    if ( reponse.status === 200){
+    if (reponse.status === 200){
       const reponsejson = await reponse.json();
       this.setState({connexionActive: false, pseudo: reponsejson["pseudo"], configurations:reponsejson.configurations})
     }
@@ -395,7 +316,43 @@ class GameOfLife extends React.Component {
     }
   }
 
+  async enregistrerConfiguration(){
+    const config = {
+      nom: this.state.nom,
+      largeur: this.state.largeur,
+      hauteur: this.state.hauteur,
+      etat_initial: this.state.etatInitial
+    }
+    let json = JSON.stringify(config)
+    let reponse = await fetch("http://127.0.0.1:5000/configuration/creer", {
+      method: "POST",
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials:"include",
+      body: json
+    })
+    if ( reponse.status === 200){
+      let reponse_json = await reponse.json()
+      this.mettreAJourListeconfiguration()
+      this.setState({identifiant:reponse_json["identifiant"]}, () => this.chargerConfiguration())
+    }
+  }
+
+  async chargerConfiguration(){
+    console.log("chargerConfiguration:"+this.state.identifiant)
+    let reponse = await fetch("http://127.0.0.1:5000/configuration/obtenir/"+this.state.identifiant, {
+      credentials: 'include'
+    })
+      const responsejson = await reponse.json()
+      if ( reponse.status === 200){
+        this.setState({nom:responsejson.Nom, largeur:responsejson.Largeur, hauteur:responsejson.Hauteur})
+        this.changerEtatInitial(responsejson.Etat_initial)
+      }
+  }
+
   async mettreAJourListeconfiguration(){
+    console.log("maj config")
     const utilisateur = await fetch("http://127.0.0.1:5000/session", {
       credentials: 'include'
     })
@@ -403,27 +360,98 @@ class GameOfLife extends React.Component {
     this.setState({configurations: utilisateurInfo.configurations})
   }
 
+  async supprimerConfiguration(){
+    console.log("supprimer:"+this.state.identifiant)
+    let reponse = await fetch("http://127.0.0.1:5000/configuration/supprimer/"+this.state.identifiant, {
+      credentials: 'include'
+    })
+    if ( reponse.status === 200){
+      console.log("supression réussie")
+      this.mettreAJourListeconfiguration()
+      this.setState({identifiant: Object.keys(this.state.configurations)[0]}, () => this.chargerConfiguration())
+    }
+  }
+
+  async modifierConfiguration(){
+    const config = {
+      identifiant: this.state.identifiant,
+      nom: this.state.nom,
+      largeur: this.state.largeur,
+      hauteur: this.state.hauteur,
+      etat_initial: this.state.etatInitial
+    }
+    let json = JSON.stringify(config)
+    console.log("modifier "+ json)
+    let reponse = await fetch("http://127.0.0.1:5000/configuration/modifier", {
+      method: "POST",
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials:"include",
+      body: json
+    })
+    if ( reponse.status === 200){
+      this.mettreAJourListeconfiguration()
+    }
+  }
+
+  changerConfigurationActive(event){
+    this.setState({identifiant:event.target.value}, () => this.chargerConfiguration())
+  }
+
+  changerEtatInitial(etatInitial){
+    this.setState({etatInitial: etatInitial, etatCourant: etatInitial})
+  }
+
+  handleClick(i,j){
+    if (!this.state.automateEnPause){
+      let nouvelAutomate = this.state.etatCourant.slice();
+      nouvelAutomate[i][j] = !this.state.etatCourant[i][j];
+      this.setState({etatCourant: nouvelAutomate});
+    }
+  }
+
+  changementNom(event){
+    this.setState({nom:event.target.value})
+  }
+  changementHauteur(event){
+    this.setState({hauteur:event.target.value})
+  }
+  changementLargeur(event){
+    this.setState({largeur:event.target.value})
+  }
+
   render() {
     return (
       <div className="game">
         <div className="game-board">
           <EnTete connexionActive = {this.state.connexionActive} 
-          connexionUtilisateur={(pseudo, motDePasse) => this.connexionUtilisateur(pseudo, motDePasse)}
-          creationUtilisateur={(pseudo, motDePasse) => this.creationUtilisateur(pseudo, motDePasse)}
-          pseudo={this.state.pseudo}
-          deconnecterUtilisateur={() => this.deconnecterUtilisateur()}
+            connexionUtilisateur={(pseudo, motDePasse) => this.connexionUtilisateur(pseudo, motDePasse)}
+            creationUtilisateur={(pseudo, motDePasse) => this.creationUtilisateur(pseudo, motDePasse)}
+            pseudo={this.state.pseudo}
+            deconnecterUtilisateur={() => this.deconnecterUtilisateur()}
           />
-          <Parametres nom = {this.state.nom} 
-          configurations={this.state.configurations} 
-          connexionActive={this.state.connexionActive}
-          mettreAJourListeconfiguration={this.mettreAJourListeconfiguration}
+          <Parametres nom={this.state.nom}
+            identifiant={this.state.identifiant}
+            largeur={this.state.largeur}
+            hauteur={this.state.hauteur}
+            configurations={this.state.configurations} 
+            connexionActive={this.state.connexionActive}
+            mettreAJourListeconfiguration={this.mettreAJourListeconfiguration}
+            changerEtatInitial={(etatInitial) => this.changerEtatInitial(etatInitial)}
+            enregistrerConfiguration={() => this.enregistrerConfiguration()}
+            modifierConfiguration={() => this.modifierConfiguration()}
+            supprimerConfiguration={() => this.supprimerConfiguration()}
+            changementNom={(event) => this.changementNom(event)}
+            changementHauteur={(event) => this.changementHauteur(event)}
+            changementLargeur={(event) => this.changementLargeur(event)}
+            changerConfigurationActive={(event) => this.changerConfigurationActive(event)}
           />
-          <Automate />
         </div>
-        <div className="game-info">
-          <div>{/* status */}</div>
-          <ol>{/* TODO */}</ol>
-        </div>
+        <Automate etatInitial={this.state.etatInitial}
+            etatCourant={this.state.etatCourant}
+            handleClick={(i,j) => this.handleClick(i,j)}
+          />
       </div>
     );
   }

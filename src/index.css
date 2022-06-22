@@ -28,6 +28,10 @@ ol, ul {
   width: 34px;
 }
 
+.automate{
+  float:right
+}
+
 .celluleVivante {
   background: #000;
   border: 1px solid #999;
