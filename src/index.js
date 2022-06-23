@@ -153,14 +153,13 @@ class Parametres extends React.Component{
             <input value={this.props.largeur} type="text" onChange={(event) => this.props.changementLargeur(event)}/>
           </div>
           <div>
-            <button type= "button" >Visualiser</button>
-            <button type= "button" >Remplissage Aléatoire</button>
-            <button type= "button" >Vider</button>
+            <button type= "button" onClick={() => this.props.visualiserAutomate()}>Visualiser</button>
+            <button type= "button" onClick={() => this.props.remplirAutomate()}>Remplissage Aléatoire</button>
+            <button type= "button" onClick={() => this.props.viderAutomate()}>Vider</button>
           </div>
           <div>
-            <button type= "button" >Démarrer</button>
-            <button type= "button" >Pause</button>
-            <button type= "button" >Stop</button>
+            <button type= "button" onClick={() => this.props.demarrerAutomate()}>Démarrer</button>
+            <button type= "button" onClick={() => this.props.pauseAutomate()}>Pause</button>
           </div>
           <div>
             <button type= "button" onClick={() => this.props.modifierConfiguration()} disabled={!this.props.connexionActive}>Modifier</button>
@@ -168,7 +167,7 @@ class Parametres extends React.Component{
             <button type= "button" onClick={() => this.props.supprimerConfiguration()} disabled={!this.props.connexionActive}>Supprimer</button>
           </div>
           <div>
-            <label>Configurations enregistrées:</label>
+            <label>Configurations:</label>
             <select value = {this.props.identifiant} onChange={(event) => this.props.changerConfigurationActive(event)}>
               {listConfig}
             </select>
@@ -403,6 +402,45 @@ class GameOfLife extends React.Component {
     this.setState({etatInitial: etatInitial, etatCourant: etatInitial})
   }
 
+  visualiserAutomate(){
+    let nouvelAutomate = []
+    for (let i = 0; i < this.state.largeur; i++){
+      nouvelAutomate.push([])
+      for (let j = 0; j < this.state.hauteur; j++){
+        nouvelAutomate[i].push(false)
+      }
+    }
+    this.setState({etatInitial: nouvelAutomate, etatCourant: nouvelAutomate})
+  }
+
+  remplirAutomate(){
+    let nouvelAutomate = this.state.etatInitial.slice()
+    for (let i = 0; i < this.state.largeur; i++){
+      for (let j = 0; j < this.state.hauteur; j++){
+        if ( Math.floor(Math.random() * 3) === 0){
+          nouvelAutomate[i][j] = false
+        }else{
+          nouvelAutomate[i][j] = true
+        }
+      }
+    }
+    this.setState({etatInitial: nouvelAutomate})
+  }
+
+  viderAutomate(){
+    let nouvelAutomate = this.state.etatInitial.slice()
+    for (let i = 0; i < this.state.largeur; i++){
+      for (let j = 0; j < this.state.hauteur; j++){
+        nouvelAutomate[i][j] = false
+      }
+    }
+    this.setState({etatInitial: nouvelAutomate})
+  }
+
+  demarrerAutomate(){}
+
+  pauseAutomate(){}
+
   handleClick(i,j){
     if (!this.state.automateEnPause){
       let nouvelAutomate = this.state.etatCourant.slice();
@@ -446,6 +484,9 @@ class GameOfLife extends React.Component {
             changementHauteur={(event) => this.changementHauteur(event)}
             changementLargeur={(event) => this.changementLargeur(event)}
             changerConfigurationActive={(event) => this.changerConfigurationActive(event)}
+            visualiserAutomate={() => this.visualiserAutomate()}
+            remplirAutomate={() => this.remplirAutomate()}
+            viderAutomate={() => this.viderAutomate()}
           />
         </div>
         <Automate etatInitial={this.state.etatInitial}
