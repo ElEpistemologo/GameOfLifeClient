@@ -158,8 +158,15 @@ class Parametres extends React.Component{
             <button type= "button" onClick={() => this.props.viderAutomate()}>Vider</button>
           </div>
           <div>
+            <p>Vitesse:
+              <button type= "button" onClick={() => this.props.augmenterVitesseAutomate()}>+</button>
+              <button type= "button" onClick={() => this.props.diminuerVitesseAutomate()}>-</button>
+            </p>
+          </div>
+          <div>
             <button type= "button" onClick={() => this.props.demarrerAutomate()}>Démarrer</button>
             <button type= "button" onClick={() => this.props.pauseAutomate()}>Pause</button>
+            <button type= "button" onClick={() => this.props.prochaineEtapeAutomate()}>Etape suivante</button>
           </div>
           <div>
             <button type= "button" onClick={() => this.props.modifierConfiguration()} disabled={!this.props.connexionActive}>Modifier</button>
@@ -222,7 +229,7 @@ class Automate extends React.Component {
     }
 
     return (
-      <div class="automate">
+      <div className="automate">
             {tableau_lignes_automate}
       </div>
     );
@@ -243,13 +250,16 @@ class GameOfLife extends React.Component {
       identifiant: "",
       configurations: {},
       etatInitial: null,
-      etatCourant: null
+      etatCourant: null,
+      socket: null
     }
 
     this.mettreAJourListeconfiguration = this.mettreAJourListeconfiguration.bind(this)
   }
 
   async componentDidMount(){
+    let socket = new WebSocket("ws://localhost:8000")
+    this.setState({socket: socket})
     const utilisateur = await fetch("http://127.0.0.1:5000/session", {
       credentials: 'include'
     })
@@ -265,6 +275,7 @@ class GameOfLife extends React.Component {
     }else{
       this.setState({connexionActive: true})
     }
+
   }
 
   async connexionUtilisateur(pseudo, motDePasse){
@@ -437,9 +448,25 @@ class GameOfLife extends React.Component {
     this.setState({etatInitial: nouvelAutomate})
   }
 
-  demarrerAutomate(){}
+  async prochaineEtapeAutomate(){
+    await this.state.socket.send("prochaine étape")
+  }
 
-  pauseAutomate(){}
+  async demarrerAutomate(){
+    await this.state.socket.send("démarrer")
+  }
+
+  async pauseAutomate(){
+    await this.state.socket.send("pause")
+  }
+
+  async augmenterVitesseAutomate(){
+    await this.state.socket.send("augmenter vitesse")
+  }
+
+  async diminuerVitesseAutomate(){
+    await this.state.socket.send("diminuer vitesse")
+  }
 
   handleClick(i,j){
     if (!this.state.automateEnPause){
@@ -487,6 +514,11 @@ class GameOfLife extends React.Component {
             visualiserAutomate={() => this.visualiserAutomate()}
             remplirAutomate={() => this.remplirAutomate()}
             viderAutomate={() => this.viderAutomate()}
+            demarrerAutomate={() => this.demarrerAutomate()}
+            pauseAutomate={() => this.pauseAutomate()}
+            prochaineEtapeAutomate={() => this.prochaineEtapeAutomate()}
+            augmenterVitesseAutomate={() => this.augmenterVitesseAutomate()}
+            diminuerVitesseAutomate={() => this.diminuerVitesseAutomate()}
           />
         </div>
         <Automate etatInitial={this.state.etatInitial}
