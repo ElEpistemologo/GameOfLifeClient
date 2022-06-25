@@ -1,6 +1,8 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
+import socketIOClient from "socket.io-client";
+import Cookies from "js-cookie";
 
 // ===================================
 // EN-TETE DE CONNEXION/CREATION DE COMPTE
@@ -258,12 +260,21 @@ class GameOfLife extends React.Component {
   }
 
   async componentDidMount(){
-    let socket = new WebSocket("ws://localhost:8000")
-    this.setState({socket: socket})
+
     const utilisateur = await fetch("http://127.0.0.1:5000/session", {
       credentials: 'include'
     })
     const utilisateurInfo = await utilisateur.json();
+    console.log("cookie:"+Cookies.get())
+    const socket = socketIOClient("ws://127.0.0.1:5001", {
+      auth: {
+        session : Cookies.get["pseudo"]
+      }
+    });
+    socket.on("connect", (reponse) => {
+      console.log("connexion au serveur web socket établie")
+      this.setState({socket: socket})
+    });
     console.log("Utilisateur connecté:"+JSON.stringify(utilisateurInfo))
     this.setState({configurations:utilisateurInfo.configurations, pseudo: utilisateurInfo.pseudo}, () => {
       if (this.state.identifiant === ""){
@@ -449,7 +460,9 @@ class GameOfLife extends React.Component {
   }
 
   async prochaineEtapeAutomate(){
-    await this.state.socket.send("prochaine étape")
+    console.log("étape suivante, socket:" +this.state.socket)
+    this.state.socket.emit("etape_suivante", 
+      {message: "prochaine étape"})
   }
 
   async demarrerAutomate(){
