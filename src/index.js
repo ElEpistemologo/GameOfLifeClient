@@ -271,10 +271,18 @@ class GameOfLife extends React.Component {
         session : Cookies.get["pseudo"]
       }
     });
-    socket.on("connect", (reponse) => {
-      console.log("connexion au serveur web socket établie")
+
+    socket.on("reponse_connexion", (msg) => {
+      console.log("répones du serveur websocket: "+ msg)
       this.setState({socket: socket})
     });
+
+    socket.on("maj_automate", (msg) => {
+      console.log("maj automate: "+msg)
+      let automate_json = JSON.parse(msg)
+      this.setState({etatCourant: automate_json.automate})
+    })
+
     console.log("Utilisateur connecté:"+JSON.stringify(utilisateurInfo))
     this.setState({configurations:utilisateurInfo.configurations, pseudo: utilisateurInfo.pseudo}, () => {
       if (this.state.identifiant === ""){
@@ -368,7 +376,7 @@ class GameOfLife extends React.Component {
       const responsejson = await reponse.json()
       if ( reponse.status === 200){
         this.setState({nom:responsejson.Nom, largeur:responsejson.Largeur, hauteur:responsejson.Hauteur})
-        this.changerEtatInitial(responsejson.Etat_initial)
+        this.setState({etatInitial: responsejson.Etat_initial, etatCourant: responsejson.Etat_initial})
       }
   }
 
@@ -420,10 +428,6 @@ class GameOfLife extends React.Component {
     this.setState({identifiant:event.target.value}, () => this.chargerConfiguration())
   }
 
-  changerEtatInitial(etatInitial){
-    this.setState({etatInitial: etatInitial, etatCourant: etatInitial})
-  }
-
   visualiserAutomate(){
     let nouvelAutomate = []
     for (let i = 0; i < this.state.largeur; i++){
@@ -446,7 +450,7 @@ class GameOfLife extends React.Component {
         }
       }
     }
-    this.setState({etatInitial: nouvelAutomate})
+    this.setState({etatInitial: nouvelAutomate, etatCourant: nouvelAutomate})
   }
 
   viderAutomate(){
@@ -459,33 +463,33 @@ class GameOfLife extends React.Component {
     this.setState({etatInitial: nouvelAutomate})
   }
 
-  async prochaineEtapeAutomate(){
-    console.log("étape suivante, socket:" +this.state.socket)
-    this.state.socket.emit("etape_suivante", 
-      {message: "prochaine étape"})
+  async demarrerAutomate(){
+    console.log("démarrer automate, socket:")
+    this.state.socket.emit("lancer_automate", 
+      {hauteur: this.state.hauteur, largeur:this.state.largeur, automate: this.state.etatInitial})
   }
 
-  async demarrerAutomate(){
-    await this.state.socket.send("démarrer")
+  async prochaineEtapeAutomate(){
+    this.state.socket.emit("etape_suivante")
   }
 
   async pauseAutomate(){
-    await this.state.socket.send("pause")
+    this.state.socket.emit("pause_automate")
   }
 
   async augmenterVitesseAutomate(){
-    await this.state.socket.send("augmenter vitesse")
+    this.state.socket.emit("augmenter_vitesse")
   }
 
   async diminuerVitesseAutomate(){
-    await this.state.socket.send("diminuer vitesse")
+    this.state.socket.emit("diminuer_vitesse")
   }
 
   handleClick(i,j){
     if (!this.state.automateEnPause){
-      let nouvelAutomate = this.state.etatCourant.slice();
-      nouvelAutomate[i][j] = !this.state.etatCourant[i][j];
-      this.setState({etatCourant: nouvelAutomate});
+      let nouvelAutomate = this.state.etatInitial.slice();
+      nouvelAutomate[i][j] = !this.state.etatInitial[i][j];
+      this.setState({etatInitial: nouvelAutomate});
     }
   }
 
@@ -516,7 +520,6 @@ class GameOfLife extends React.Component {
             configurations={this.state.configurations} 
             connexionActive={this.state.connexionActive}
             mettreAJourListeconfiguration={this.mettreAJourListeconfiguration}
-            changerEtatInitial={(etatInitial) => this.changerEtatInitial(etatInitial)}
             enregistrerConfiguration={() => this.enregistrerConfiguration()}
             modifierConfiguration={() => this.modifierConfiguration()}
             supprimerConfiguration={() => this.supprimerConfiguration()}
