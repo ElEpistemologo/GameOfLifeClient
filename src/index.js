@@ -137,8 +137,17 @@ class Parametres extends React.Component{
     return liste
   }
 
+  boutonPauseReprendre(){
+    if ( this.props.pause ){
+      return <button type= "button" onClick={() => this.props.pauseAutomate()}>Reprendre</button>
+    }else{
+      return <button type= "button" onClick={() => this.props.pauseAutomate()}>Pause</button>
+    }
+  }
+
   render(){
     let listConfig = this.construireListeConfiguration()
+    let boutonPauseReprendre = this.boutonPauseReprendre()
     return(
       <div>
         <form>
@@ -167,7 +176,8 @@ class Parametres extends React.Component{
           </div>
           <div>
             <button type= "button" onClick={() => this.props.demarrerAutomate()}>Démarrer</button>
-            <button type= "button" onClick={() => this.props.pauseAutomate()}>Pause</button>
+            {boutonPauseReprendre}
+            <button type= "button" onClick={() => this.props.stopAutomate()}>Stop</button>
             <button type= "button" onClick={() => this.props.prochaineEtapeAutomate()}>Etape suivante</button>
           </div>
           <div>
@@ -253,7 +263,8 @@ class GameOfLife extends React.Component {
       configurations: {},
       etatInitial: null,
       etatCourant: null,
-      socket: null
+      socket: null,
+      pause: false
     }
 
     this.mettreAJourListeconfiguration = this.mettreAJourListeconfiguration.bind(this)
@@ -376,7 +387,7 @@ class GameOfLife extends React.Component {
       const responsejson = await reponse.json()
       if ( reponse.status === 200){
         this.setState({nom:responsejson.Nom, largeur:responsejson.Largeur, hauteur:responsejson.Hauteur})
-        this.setState({etatInitial: responsejson.Etat_initial, etatCourant: responsejson.Etat_initial})
+        this.setState({etatInitial: responsejson.Etat_initial, etatCourant: responsejson.Etat_initial}, () => this.stopAutomate())
       }
   }
 
@@ -463,26 +474,35 @@ class GameOfLife extends React.Component {
     this.setState({etatInitial: nouvelAutomate})
   }
 
-  async demarrerAutomate(){
+  demarrerAutomate(){
     console.log("démarrer automate, socket:")
     this.state.socket.emit("lancer_automate", 
       {hauteur: this.state.hauteur, largeur:this.state.largeur, automate: this.state.etatInitial})
   }
 
-  async prochaineEtapeAutomate(){
-    this.state.socket.emit("etape_suivante")
+  prochaineEtapeAutomate(){
+    this.state.socket.emit("etape_suivante", 
+    {hauteur: this.state.hauteur, largeur:this.state.largeur, automate: this.state.etatCourant})
   }
 
-  async pauseAutomate(){
+  pauseAutomate(){
     this.state.socket.emit("pause_automate")
+    this.setState({pause: !this.state.pause})
   }
 
-  async augmenterVitesseAutomate(){
+  augmenterVitesseAutomate(){
     this.state.socket.emit("augmenter_vitesse")
   }
 
-  async diminuerVitesseAutomate(){
+  diminuerVitesseAutomate(){
     this.state.socket.emit("diminuer_vitesse")
+  }
+
+  stopAutomate(){
+    if ( this.state.socket != null){
+      this.state.socket.emit("stop_automate")
+      this.setState({etatCourant:this.state.etatInitial, pause: false})
+    }
   }
 
   handleClick(i,j){
@@ -535,6 +555,8 @@ class GameOfLife extends React.Component {
             prochaineEtapeAutomate={() => this.prochaineEtapeAutomate()}
             augmenterVitesseAutomate={() => this.augmenterVitesseAutomate()}
             diminuerVitesseAutomate={() => this.diminuerVitesseAutomate()}
+            stopAutomate={() => this.stopAutomate()}
+            pause={this.state.pause}
           />
         </div>
         <Automate etatInitial={this.state.etatInitial}
