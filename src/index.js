@@ -4,8 +4,8 @@ import './index.css';
 import socketIOClient from "socket.io-client";
 import Cookies from "js-cookie";
 
-const API_URL = "http://51.68.229.81/:8001";
-const SOCKET_URL = "http://51.68.229.81/:8002"
+const API_URL = "http://51.68.229.81:8001/";
+const SOCKET_URL = "http://51.68.229.81:8002/"
 
 // ===================================
 // EN-TETE DE CONNEXION/CREATION DE COMPTE
