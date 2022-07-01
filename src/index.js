@@ -4,6 +4,9 @@ import './index.css';
 import socketIOClient from "socket.io-client";
 import Cookies from "js-cookie";
 
+const API_URL = "http://127.0.0.1:8001";
+const SOCKET_URL = "http://127.0.0.1:8002"
+
 // ===================================
 // EN-TETE DE CONNEXION/CREATION DE COMPTE
 //====================================
@@ -272,12 +275,12 @@ class GameOfLife extends React.Component {
 
   async componentDidMount(){
 
-    const utilisateur = await fetch("http://127.0.0.1:5000/session", {
+    const utilisateur = await fetch(API_URL+"/session", {
       credentials: 'include'
     })
     const utilisateurInfo = await utilisateur.json();
     console.log("cookie:"+Cookies.get())
-    const socket = socketIOClient("ws://127.0.0.1:5001", {
+    const socket = socketIOClient(SOCKET_URL, {
       auth: {
         session : Cookies.get["pseudo"]
       }
@@ -310,7 +313,7 @@ class GameOfLife extends React.Component {
 
   async connexionUtilisateur(pseudo, motDePasse){
     let json = JSON.stringify({pseudo: pseudo, mot_de_passe: motDePasse})
-    const reponse = await fetch("http://127.0.0.1:5000/utilisateur/connecter", {
+    const reponse = await fetch(API_URL+"/utilisateur/connecter", {
       method: "POST",
       headers: {
         'Content-Type': 'application/json',
@@ -328,7 +331,7 @@ class GameOfLife extends React.Component {
   }
 
   async deconnecterUtilisateur(){
-    const reponse = await fetch("http://127.0.0.1:5000/utilisateur/deconnecter",{
+    const reponse = await fetch(API_URL+"/utilisateur/deconnecter",{
       credentials: "include"
     })
     if (reponse.status === 200){
@@ -339,7 +342,7 @@ class GameOfLife extends React.Component {
 
   async creationUtilisateur(pseudo, motDePasse){
     let json = JSON.stringify({pseudo: pseudo, mot_de_passe: motDePasse})
-    const reponse = await fetch("http://127.0.0.1:5000/utilisateur/creer", {
+    const reponse = await fetch(API_URL+"/utilisateur/creer", {
       method: "POST",
       headers: {
         'Content-Type': 'application/json',
@@ -364,7 +367,7 @@ class GameOfLife extends React.Component {
       etat_initial: this.state.etatInitial
     }
     let json = JSON.stringify(config)
-    let reponse = await fetch("http://127.0.0.1:5000/configuration/creer", {
+    let reponse = await fetch(API_URL+"/configuration/creer", {
       method: "POST",
       headers: {
         'Content-Type': 'application/json',
@@ -381,7 +384,7 @@ class GameOfLife extends React.Component {
 
   async chargerConfiguration(){
     console.log("chargerConfiguration:"+this.state.identifiant)
-    let reponse = await fetch("http://127.0.0.1:5000/configuration/obtenir/"+this.state.identifiant, {
+    let reponse = await fetch(API_URL+"/configuration/obtenir/"+this.state.identifiant, {
       credentials: 'include'
     })
       const responsejson = await reponse.json()
@@ -393,7 +396,7 @@ class GameOfLife extends React.Component {
 
   async mettreAJourListeconfiguration(){
     console.log("maj config")
-    const utilisateur = await fetch("http://127.0.0.1:5000/session", {
+    const utilisateur = await fetch(API_URL+"/session", {
       credentials: 'include'
     })
     const utilisateurInfo = await utilisateur.json()
@@ -402,7 +405,7 @@ class GameOfLife extends React.Component {
 
   async supprimerConfiguration(){
     console.log("supprimer:"+this.state.identifiant)
-    let reponse = await fetch("http://127.0.0.1:5000/configuration/supprimer/"+this.state.identifiant, {
+    let reponse = await fetch(API_URL+"/configuration/supprimer/"+this.state.identifiant, {
       credentials: 'include'
     })
     if ( reponse.status === 200){
@@ -422,7 +425,7 @@ class GameOfLife extends React.Component {
     }
     let json = JSON.stringify(config)
     console.log("modifier "+ json)
-    let reponse = await fetch("http://127.0.0.1:5000/configuration/modifier", {
+    let reponse = await fetch(API_URL+"/configuration/modifier", {
       method: "POST",
       headers: {
         'Content-Type': 'application/json',
