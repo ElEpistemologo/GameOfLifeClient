@@ -294,9 +294,10 @@ class GameOfLife extends React.Component {
     });
 
     socket.on("maj_automate", (msg) => {
-      console.log("maj automate: "+msg)
       let automate_json = JSON.parse(msg)
-      this.setState({etatCourant: automate_json.automate})
+      if ( !this.state.stop){
+        this.setState({etatCourant: automate_json.automate})
+      }
     })
 
     console.log("Utilisateur connecté:"+JSON.stringify(utilisateurInfo))
@@ -481,8 +482,9 @@ class GameOfLife extends React.Component {
 
   demarrerAutomate(){
     console.log("démarrer automate, socket:")
+    this.setState({stop: false})
     this.state.socket.emit("lancer_automate", 
-      {hauteur: this.state.hauteur, largeur:this.state.largeur, automate: this.state.etatInitial})
+      {hauteur: this.state.hauteur, largeur:this.state.largeur, automate: this.state.etatCourant})
   }
 
   prochaineEtapeAutomate(){
@@ -505,8 +507,8 @@ class GameOfLife extends React.Component {
 
   stopAutomate(){
     if ( this.state.socket != null){
+      this.setState({etatCourant:this.state.etatInitial, pause: false, stop: true})
       this.state.socket.emit("stop_automate")
-      this.setState({etatCourant:this.state.etatInitial, pause: false})
     }
   }
 
