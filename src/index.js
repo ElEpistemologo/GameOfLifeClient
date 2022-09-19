@@ -460,7 +460,7 @@ class GameOfLife extends React.Component {
     let nouvelAutomate = this.state.etatInitial.slice()
     for (let i = 0; i < this.state.largeur; i++){
       for (let j = 0; j < this.state.hauteur; j++){
-        if ( Math.floor(Math.random() * 3) === 0){
+        if ( Math.floor(Math.random() * 4) === 0){
           nouvelAutomate[i][j] = false
         }else{
           nouvelAutomate[i][j] = true
