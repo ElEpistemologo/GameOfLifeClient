@@ -183,7 +183,7 @@ class Parametres extends React.Component{
             <button type= "button" onClick={() => this.props.demarrerAutomate()}>Démarrer</button>
             {boutonPauseReprendre}
             <button type= "button" onClick={() => this.props.stopAutomate()}>Stop</button>
-            <button type= "button" onClick={() => this.props.prochaineEtapeAutomate()}>Etape suivante</button>
+            <button type= "button" disabled onClick={() => this.props.prochaineEtapeAutomate()}>Etape suivante</button>
           </div>
           <div>
             <button type= "button" onClick={() => this.props.modifierConfiguration()} disabled={!this.props.connexionActive}>Modifier</button>
